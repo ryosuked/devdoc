@@ -1,0 +1,28 @@
+digraph FileDownloadSystem {
+    rankdir=LR;
+    node [shape=box, style=filled, fillcolor=lightgray];
+
+    subgraph cluster_local {
+        label = "ローカル環境";
+        style = dashed;
+
+        CommandTool [label="コマンドツール"];
+        LocalServer [label="ローカルサーバー"];
+        DownloadCommand [label="ダウンロードコマンド"];
+    }
+
+    subgraph cluster_remote {
+        label = "ネットワーク先";
+        style = dashed;
+
+        FileStorage [label="ファイルストレージ"];
+    }
+
+    // フローの定義
+    CommandTool -> FileStorage [label="ファイルの形式確認"];
+    CommandTool -> LocalServer [label="ダウンロードジョブ登録"];
+    LocalServer -> DownloadCommand [label="スケジュール実行"];
+    DownloadCommand -> FileStorage [label="ファイル取得"];
+    DownloadCommand -> LocalServer [label="完了通知"];
+}
+
