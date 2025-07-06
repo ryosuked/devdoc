@@ -1,0 +1,29 @@
+@startuml
+actor ユーザー
+participant "コマンドツール" as Tool
+participant "ローカルサーバー" as Server
+participant "ダウンロードコマンド" as Downloader
+participant "ファイルストレージ" as Storage
+
+' ユーザー操作
+ユーザー -> Tool : ダウンロード対象ファイルを指定
+Tool -> Storage : ファイル形式一覧を取得
+Storage --> Tool : 利用可能な形式一覧を返す
+Tool -> ユーザー : 選択可能な形式を提示
+ユーザー -> Tool : ダウンロード形式を選択
+
+' ジョブ登録と終了
+Tool -> Server : ダウンロードジョブを登録
+Tool -> ユーザー : 終了通知（ジョブ登録完了）
+
+' スケジュールによりジョブ実行
+Server -> Downloader : ダウンロード処理を実行
+Downloader -> Storage : 対象ファイルを取得（指定形式）
+Storage --> Downloader : ファイルデータを返す
+Downloader -> Server : ローカルサーバーのストレージに保存
+Downloader -> Server : 完了報告
+
+' 通知
+Server -> ユーザー : ダウンロード完了を通知
+
+@enduml
