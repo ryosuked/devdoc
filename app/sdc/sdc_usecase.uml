@@ -1,0 +1,21 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+actor ユーザー
+
+package "ファイルダウンロードツール" {
+    usecase "ファイルを指定する" as UC1
+    usecase "ファイル形式を選択する" as UC2
+    usecase "ジョブを登録する" as UC3
+    usecase "スケジュール実行する" as UC4
+    usecase "ダウンロード完了を通知する" as UC5
+}
+
+ユーザー --> UC1
+ユーザー --> UC2
+ユーザー --> UC3
+UC4 --> UC5
+
+@enduml
+
