@@ -1,0 +1,27 @@
+@startuml
+skinparam componentStyle rectangle
+skinparam backgroundColor #ffffff
+skinparam component {
+    BackgroundColor #eeeeee
+    BorderColor Black
+}
+
+package "ローカル環境" {
+    [コマンドツール] as CommandTool
+    [ローカルサーバー] as LocalServer
+    [ダウンロードコマンド] as DownloadCommand
+}
+
+package "ネットワーク先" {
+    [ファイルストレージ] as FileStorage
+}
+
+' 処理の流れ
+CommandTool --> FileStorage : ファイル形式確認
+CommandTool --> LocalServer : ジョブ登録
+LocalServer --> DownloadCommand : スケジュール実行
+DownloadCommand --> FileStorage : ファイル取得
+DownloadCommand --> LocalServer : 完了通知
+
+@enduml
+
