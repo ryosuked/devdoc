@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>herdr 操作チュートリアル</title>
+<style>
+:root {
+  --bg: #fbfaf7;
+  --fg: #1f2328;
+  --muted: #5f6670;
+  --panel: #ffffff;
+  --border: #dcd8cf;
+  --code-bg: #f1eee8;
+  --accent: #2f6fb3;
+  --term-bg: #1c1f24;
+  --term-fg: #d7dbe0;
+  --term-mute: #7f8792;
+  --term-border: #3a404a;
+  --term-side: #23272e;
+  --s-work: #4c9be8;
+  --s-block: #e5534b;
+  --s-idle: #8b949e;
+  --s-done: #46b26b;
+  --diagram-fill: #ffffff;
+  --diagram-stroke: #8a8578;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15171a;
+    --fg: #e4e6e9;
+    --muted: #9aa1aa;
+    --panel: #1d2024;
+    --border: #33373d;
+    --code-bg: #24282d;
+    --accent: #6aa8e8;
+    --term-bg: #0f1114;
+    --term-side: #171a1e;
+    --diagram-fill: #1d2024;
+    --diagram-stroke: #6b7280;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15171a;
+  --fg: #e4e6e9;
+  --muted: #9aa1aa;
+  --panel: #1d2024;
+  --border: #33373d;
+  --code-bg: #24282d;
+  --accent: #6aa8e8;
+  --term-bg: #0f1114;
+  --term-side: #171a1e;
+  --diagram-fill: #1d2024;
+  --diagram-stroke: #6b7280;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.75 -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+}
+main { max-width: 860px; margin: 0 auto; padding: 32px 16px 80px; }
+h1 { font-size: 1.9rem; line-height: 1.3; margin: 0 0 8px; }
+h2 { font-size: 1.35rem; margin: 56px 0 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+h3 { font-size: 1.05rem; margin: 24px 0 8px; }
+p, li { color: var(--fg); }
+.lead { color: var(--muted); margin: 0 0 24px; }
+a { color: var(--accent); }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .9em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; overflow-x: auto; font-size: .86rem; line-height: 1.6; }
+pre code { background: none; padding: 0; }
+.cm { color: var(--muted); }
+figure { margin: 20px 0; }
+figure svg { width: 100%; height: auto; display: block; }
+figcaption { color: var(--muted); font-size: .85rem; margin-top: 6px; }
+.step-tag { display: inline-block; font-size: .78rem; font-weight: 600; color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; padding: 0 10px; margin-bottom: 4px; }
+.check { border-left: 3px solid var(--s-done); background: var(--panel); padding: 8px 14px; margin: 16px 0; border-radius: 0 6px 6px 0; }
+.warn { border-left: 3px solid var(--s-block); background: var(--panel); padding: 8px 14px; margin: 16px 0; border-radius: 0 6px 6px 0; }
+.check strong, .warn strong { display: block; font-size: .85rem; }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; margin: 12px 0; }
+th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; vertical-align: top; }
+th { background: var(--panel); }
+.table-wrap { overflow-x: auto; }
+.route { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; padding: 0; list-style: none; counter-reset: r; }
+.route li { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: .9rem; counter-increment: r; }
+.route li::before { content: counter(r) ". "; color: var(--accent); font-weight: 700; }
+.route li a { color: var(--fg); text-decoration: none; }
+.route li small { display: block; color: var(--muted); }
+
+/* SVG */
+.t-bg { fill: var(--term-bg); }
+.t-side { fill: var(--term-side); }
+.t-line { stroke: var(--term-border); fill: none; }
+.t-text { fill: var(--term-fg); font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+.t-mute { fill: var(--term-mute); font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+.t-focus { stroke: var(--s-work); fill: none; stroke-width: 1.5; }
+.s-work { fill: var(--s-work); }
+.s-block { fill: var(--s-block); }
+.s-idle { fill: var(--s-idle); }
+.s-done { fill: var(--s-done); }
+.d-box { fill: var(--diagram-fill); stroke: var(--diagram-stroke); }
+.d-box-accent { fill: var(--diagram-fill); stroke: var(--accent); stroke-width: 1.5; }
+.d-text { fill: var(--fg); font-size: 13px; }
+.d-sub { fill: var(--muted); font-size: 11.5px; }
+.d-mono { fill: var(--fg); font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; }
+.d-line { stroke: var(--diagram-stroke); fill: none; stroke-width: 1.3; }
+.d-accent { stroke: var(--accent); fill: none; stroke-width: 1.5; }
+.d-dash { stroke: var(--diagram-stroke); fill: none; stroke-dasharray: 4 4; }
+.d-arrowhead { fill: var(--diagram-stroke); }
+.d-arrowhead-accent { fill: var(--accent); }
+.bar-work { fill: var(--s-work); opacity: .85; }
+.bar-done { fill: var(--s-done); opacity: .85; }
+.bar-mute { fill: var(--s-idle); opacity: .5; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>herdr 操作チュートリアル</h1>
+<p class="lead">API サーバーに機能を 1 つ足す作業を、エージェント 2 体（実装役とレビュー役）に任せる、という筋書きで進みます。上から順に操作すると、herdr でできることを一通り通ります。</p>
+
+<p class="cm">画面の図は説明のための模式図で、実際の見た目とは違います。ペイン ID（<code>w1:p1</code> など）は例です。実際の値は <code>herdr pane list</code> や <code>herdr agent list</code> で確かめてください。</p>
+
+<h2 id="route">全体の流れ</h2>
+<ol class="route">
+  <li><a href="#s1">インストールと起動<small>セッション / 名前付きセッション</small></a></li>
+  <li><a href="#s2">画面を組む<small>Workspace・Tab・Pane、マウス、prefix キー</small></a></li>
+  <li><a href="#s3">エージェントを起動<small>自動検出、integration</small></a></li>
+  <li><a href="#s4">状態を見張る<small>サイドバー、上の階層への伝搬、名前付け</small></a></li>
+  <li><a href="#s5">タスクを worktree に分ける<small>worktree で Workspace を作る</small></a></li>
+  <li><a href="#s6">CLI で連携させる<small>pane run / wait-output、agent prompt / wait</small></a></li>
+  <li><a href="#s7">エージェントに自分で操作させる<small>エージェント用のスキル</small></a></li>
+  <li><a href="#s8">Socket API で状態を受け取る<small>NDJSON、イベント購読</small></a></li>
+  <li><a href="#s9">離席と再接続<small>detach / attach、agent attach</small></a></li>
+  <li><a href="#s10">リモートの開発機で動かす<small>--remote、machine、--machine</small></a></li>
+  <li><a href="#s11">再起動と更新<small>レイアウトの復元、会話の resume、handoff</small></a></li>
+  <li><a href="#s12">調子が悪いとき<small>agent explain、検出ルールの上書き</small></a></li>
+  <li><a href="#s13">広げる・片付ける<small>設定、プラグイン、終了</small></a></li>
+</ol>
+
+<!-- ============ S1 ============ -->
+<h2 id="s1"><span class="step-tag">STEP 1</span><br>インストールと起動</h2>
+<pre><code>curl -fsSL https://herdr.dev/install.sh | sh   <span class="cm"># または brew install herdr / mise use -g herdr</span>
+herdr --version
+
+cd ~/work/api
+herdr                                          <span class="cm"># デフォルトのセッションを起動して attach</span></code></pre>
+<p><code>herdr</code> を実行すると、裏でサーバーが立ち上がり、いま開いているターミナルがそのクライアントになります。ターミナルアプリを替える必要はありません。</p>
+<p>用途ごとに完全に分けたいときは、名前付きのセッションを使います。</p>
+<pre><code>herdr --session demo        <span class="cm"># 別のサーバー名前空間。デフォルトのセッションとは干渉しない</span>
+herdr session list</code></pre>
+
+<figure>
+<svg viewBox="0 0 760 210" role="img" aria-label="Session の中に Workspace、Tab、Pane、Agent が入れ子になっている図">
+  <rect class="d-box" x="8" y="8" width="744" height="194" rx="10"/>
+  <text class="d-text" x="22" y="30" font-weight="600">Session「default」</text>
+  <text class="d-sub" x="160" y="30">バックグラウンドのサーバー。detach しても動き続ける</text>
+
+  <rect class="d-box-accent" x="22" y="42" width="470" height="148" rx="8"/>
+  <text class="d-text" x="34" y="62" font-weight="600">Workspace「api」</text>
+  <text class="d-sub" x="160" y="62">リポジトリかタスクごとに 1 つ</text>
+
+  <rect class="d-box" x="34" y="74" width="300" height="104" rx="6"/>
+  <text class="d-text" x="46" y="93">Tab「agents」</text>
+  <rect class="d-box" x="46" y="104" width="134" height="62" rx="4"/>
+  <text class="d-mono" x="56" y="122">Pane w1:p1</text>
+  <circle class="s-work" cx="62" cy="146" r="5"/>
+  <text class="d-mono" x="72" y="150">Agent claude</text>
+  <rect class="d-box" x="190" y="104" width="134" height="62" rx="4"/>
+  <text class="d-mono" x="200" y="122">Pane w1:p2</text>
+  <circle class="s-idle" cx="206" cy="146" r="5"/>
+  <text class="d-mono" x="216" y="150">Agent codex</text>
+
+  <rect class="d-box" x="346" y="74" width="134" height="104" rx="6"/>
+  <text class="d-text" x="358" y="93">Tab「server」</text>
+  <rect class="d-box" x="358" y="104" width="110" height="62" rx="4"/>
+  <text class="d-mono" x="366" y="122">Pane w1:p3</text>
+  <text class="d-sub" x="366" y="150">普通のシェル</text>
+
+  <rect class="d-box" x="506" y="42" width="232" height="148" rx="8"/>
+  <text class="d-text" x="518" y="62" font-weight="600">Workspace「api-feature-x」</text>
+  <text class="d-sub" x="518" y="80">STEP 5 で worktree から作る</text>
+  <rect class="d-box" x="518" y="94" width="208" height="84" rx="6"/>
+  <text class="d-text" x="530" y="113">Tab</text>
+  <rect class="d-box" x="530" y="122" width="184" height="46" rx="4"/>
+  <circle class="s-block" cx="546" cy="146" r="5"/>
+  <text class="d-mono" x="556" y="150">Agent reviewer</text>
+</svg>
+<figcaption>図 1: 入れ子の構造。Session &gt; Workspace &gt; Tab &gt; Pane で、Agent はペインの中で検出されたプロセス。</figcaption>
+</figure>
+
+<div class="check"><strong>確認</strong><code>herdr status</code> でサーバーとクライアントの状態を見られます。ペインの中にいると環境変数 <code>HERDR_ENV=1</code> が立ちます。herdr の中でもう一度 <code>herdr</code> を起動すること（入れ子）はできません。</div>
+
+<!-- ============ S2 ============ -->
+<h2 id="s2"><span class="step-tag">STEP 2</span><br>画面を組む</h2>
+<p>実装役、レビュー役、開発サーバーの 3 つのペインを作ります。マウスだけでも操作できます。</p>
+<div class="table-wrap"><table>
+<tr><th>やること</th><th>マウス</th><th>キー（prefix = <code>ctrl+b</code>）</th></tr>
+<tr><td>右に分割</td><td>右クリックメニュー</td><td><code>prefix</code> → <code>v</code></td></tr>
+<tr><td>下に分割</td><td>右クリックメニュー</td><td><code>prefix</code> → <code>-</code></td></tr>
+<tr><td>フォーカスを移す</td><td>ペインをクリック</td><td>navigate モード</td></tr>
+<tr><td>サイズを変える</td><td>境界をドラッグ</td><td>—</td></tr>
+<tr><td>新しいタブ</td><td>—</td><td><code>prefix</code> → <code>c</code></td></tr>
+<tr><td>コピー</td><td>ドラッグで選択</td><td>—</td></tr>
+<tr><td>キー一覧</td><td>—</td><td><code>prefix</code> → <code>?</code></td></tr>
+</table></div>
+<p>手順: <code>prefix v</code> で右に分割し、右のペインで <code>prefix -</code> を押して下に分割します。右下のペインで開発サーバーを起動します。</p>
+<pre><code>npm run dev      <span class="cm"># 右下のペイン w1:p3</span></code></pre>
+
+<figure>
+<svg viewBox="0 0 760 330" role="img" aria-label="herdr の画面の模式図。左にサイドバー、右に 3 つのペイン">
+  <rect class="t-bg" x="0" y="0" width="760" height="330" rx="8"/>
+  <rect class="t-side" x="0" y="0" width="180" height="330" rx="8"/>
+  <line class="t-line" x1="180" y1="0" x2="180" y2="330"/>
+  <text class="t-mute" x="14" y="24">WORKSPACES</text>
+  <text class="t-text" x="14" y="50">▾ api</text>
+  <text class="t-text" x="28" y="72">▾ agents</text>
+  <circle class="s-work" cx="46" cy="90" r="4.5"/>
+  <text class="t-text" x="56" y="94">claude</text>
+  <text class="t-mute" x="108" y="94">working</text>
+  <circle class="s-idle" cx="46" cy="112" r="4.5"/>
+  <text class="t-text" x="56" y="116">codex</text>
+  <text class="t-mute" x="108" y="116">idle</text>
+  <text class="t-text" x="28" y="140">▸ server</text>
+
+  <rect class="t-focus" x="188" y="8" width="282" height="296" rx="4"/>
+  <text class="t-mute" x="198" y="26">w1:p1 · claude</text>
+  <text class="t-text" x="198" y="54">&gt; /users に検索 API を追加して</text>
+  <text class="t-mute" x="198" y="78">● Reading src/routes/users.ts</text>
+  <text class="t-mute" x="198" y="98">● Editing src/routes/users.ts</text>
+  <text class="t-mute" x="198" y="118">  + router.get("/search", ...)</text>
+
+  <rect class="t-line" x="478" y="8" width="274" height="146" rx="4"/>
+  <text class="t-mute" x="488" y="26">w1:p2 · codex</text>
+  <text class="t-text" x="488" y="54">›</text>
+  <text class="t-mute" x="488" y="78">（入力待ち）</text>
+
+  <rect class="t-line" x="478" y="160" width="274" height="144" rx="4"/>
+  <text class="t-mute" x="488" y="178">w1:p3 · zsh</text>
+  <text class="t-text" x="488" y="206">$ npm run dev</text>
+  <text class="t-mute" x="488" y="228">server ready on :3000</text>
+
+  <text class="t-mute" x="188" y="322">prefix+v 右に分割 · prefix+- 下に分割 · prefix+c タブ · prefix+? ヘルプ</text>
+</svg>
+<figcaption>図 2: 画面の構成。左のサイドバーに Workspace、タブ、エージェントと、それぞれの状態が並ぶ。青い枠がフォーカスのあるペイン。</figcaption>
+</figure>
+
+<!-- ============ S3 ============ -->
+<h2 id="s3"><span class="step-tag">STEP 3</span><br>エージェントを起動する</h2>
+<p>左のペインで Claude Code を、右上のペインで Codex を、いつも通り起動します。herdr はエージェントをラップしません。ペインのプロセスと画面を見て、自動で検出します。</p>
+<pre><code>claude          <span class="cm"># w1:p1</span>
+codex           <span class="cm"># w1:p2</span></code></pre>
+<p>検出の精度を上げるために、エージェントごとの integration を入れます。入れるとエージェントが状態を直接報告するので、画面から推測するより正確になります。サーバーを再起動したあとに会話を再開する機能（STEP 11）にも必要です。</p>
+<pre><code>herdr integration install claude
+herdr integration install codex
+herdr integration status          <span class="cm"># 入っているか、古くないか</span></code></pre>
+<div class="check"><strong>確認</strong><code>herdr agent list</code> に claude と codex が出ていれば検出できています。</div>
+
+<!-- ============ S4 ============ -->
+<h2 id="s4"><span class="step-tag">STEP 4</span><br>状態を見張る</h2>
+<p>claude に作業を頼んだら、あとはサイドバーを見るだけです。ペインを順に覗いて回る必要はありません。</p>
+<figure>
+<svg viewBox="0 0 760 290" role="img" aria-label="サイドバーの状態表示と、blocked が上の階層へ伝わる様子">
+  <defs>
+    <marker id="ah4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="d-arrowhead-accent" d="M0,0 L10,5 L0,10 z"/></marker>
+  </defs>
+  <rect class="t-side" x="0" y="0" width="320" height="290" rx="8"/>
+  <text class="t-mute" x="16" y="26">WORKSPACES</text>
+  <circle class="s-block" cx="22" cy="50" r="5"/><text class="t-text" x="34" y="54">▾ api</text><text class="t-mute" x="230" y="54">blocked</text>
+  <circle class="s-block" cx="40" cy="78" r="5"/><text class="t-text" x="52" y="82">▾ agents</text><text class="t-mute" x="230" y="82">blocked</text>
+  <circle class="s-block" cx="58" cy="106" r="5"/><text class="t-text" x="70" y="110">impl</text><text class="t-mute" x="230" y="110">blocked</text>
+  <circle class="s-work" cx="58" cy="134" r="5"/><text class="t-text" x="70" y="138">codex</text><text class="t-mute" x="230" y="138">working</text>
+  <circle class="s-done" cx="22" cy="170" r="5"/><text class="t-text" x="34" y="174">▸ web</text><text class="t-mute" x="230" y="174">done</text>
+  <circle class="s-idle" cx="22" cy="198" r="5"/><text class="t-text" x="34" y="202">▸ docs</text><text class="t-mute" x="230" y="202">idle</text>
+  <path class="d-accent" d="M 290 106 C 312 100 312 60 296 52" marker-end="url(#ah4)"/>
+  <text class="d-sub" x="16" y="240" style="fill:var(--term-mute)">一番急ぐ状態が、ペイン → タブ → Workspace へ</text>
+  <text class="d-sub" x="16" y="258" style="fill:var(--term-mute)">伝わる。折りたたんだままでも気づける</text>
+
+  <circle class="s-block" cx="360" cy="40" r="7"/>
+  <text class="d-text" x="376" y="45" font-weight="600">blocked</text>
+  <text class="d-sub" x="376" y="64">承認・質問・権限の確認で止まっている。人の対応が必要</text>
+  <circle class="s-work" cx="360" cy="100" r="7"/>
+  <text class="d-text" x="376" y="105" font-weight="600">working</text>
+  <text class="d-sub" x="376" y="124">処理中。放っておいてよい</text>
+  <circle class="s-done" cx="360" cy="160" r="7"/>
+  <text class="d-text" x="376" y="165" font-weight="600">done</text>
+  <text class="d-sub" x="376" y="184">終わったがまだ見ていない。開くと消える</text>
+  <circle class="s-idle" cx="360" cy="220" r="7"/>
+  <text class="d-text" x="376" y="225" font-weight="600">idle</text>
+  <text class="d-sub" x="376" y="244">プロンプトで次の指示を待っている</text>
+</svg>
+<figcaption>図 3: サイドバーの状態表示。impl が承認待ちになると、タブと Workspace にも赤が付く。</figcaption>
+</figure>
+<p>エージェントに役割の名前を付けておくと、以降の CLI で名前を使って指定できます。</p>
+<pre><code>herdr agent rename w1:p1 impl
+herdr agent rename w1:p2 codex
+herdr agent list</code></pre>
+<p>blocked になったら、そのペインをクリックして承認するなり答えるなりします。</p>
+
+<!-- ============ S5 ============ -->
+<h2 id="s5"><span class="step-tag">STEP 5</span><br>タスクを worktree に分ける</h2>
+<p>レビューを同じ作業ツリーでやらせると、実装中の変更とぶつかります。Git worktree を作り、それを専用の Workspace として開きます。</p>
+<pre><code>herdr worktree create --cwd ~/work/api --branch feature-x
+herdr worktree list
+herdr workspace list            <span class="cm"># 新しい Workspace（例: w2）が増えている</span></code></pre>
+<figure>
+<svg viewBox="0 0 760 170" role="img" aria-label="1 つのリポジトリから worktree を作り、それぞれを Workspace として開く図">
+  <defs>
+    <marker id="ah5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="d-arrowhead" d="M0,0 L10,5 L0,10 z"/></marker>
+  </defs>
+  <rect class="d-box" x="10" y="55" width="200" height="60" rx="8"/>
+  <text class="d-text" x="24" y="80" font-weight="600">リポジトリ</text>
+  <text class="d-mono" x="24" y="100">~/work/api (main)</text>
+
+  <path class="d-line" d="M210 85 C 250 85 250 40 290 40" marker-end="url(#ah5)"/>
+  <path class="d-line" d="M210 85 C 250 85 250 130 290 130" marker-end="url(#ah5)"/>
+  <text class="d-sub" x="222" y="68">worktree create</text>
+
+  <rect class="d-box" x="292" y="12" width="210" height="56" rx="8"/>
+  <text class="d-mono" x="304" y="34">main の作業ツリー</text>
+  <text class="d-sub" x="304" y="54">実装役 impl が作業</text>
+  <rect class="d-box-accent" x="292" y="102" width="210" height="56" rx="8"/>
+  <text class="d-mono" x="304" y="124">branch feature-x</text>
+  <text class="d-sub" x="304" y="144">レビュー役 reviewer が作業</text>
+
+  <path class="d-line" d="M502 40 L 560 40" marker-end="url(#ah5)"/>
+  <path class="d-line" d="M502 130 L 560 130" marker-end="url(#ah5)"/>
+  <rect class="d-box" x="562" y="12" width="186" height="56" rx="8"/>
+  <text class="d-text" x="576" y="44">Workspace w1「api」</text>
+  <rect class="d-box-accent" x="562" y="102" width="186" height="56" rx="8"/>
+  <text class="d-text" x="576" y="134">Workspace w2</text>
+</svg>
+<figcaption>図 4: worktree ごとに Workspace を分ける。サイドバーでもタスク単位で並ぶ。</figcaption>
+</figure>
+
+<!-- ============ S6 ============ -->
+<h2 id="s6"><span class="step-tag">STEP 6</span><br>CLI で連携させる</h2>
+<p>ここからは、普通のシェルや別のペインから <code>herdr</code> コマンドで操作します。ほとんどのコマンドは JSON を返すので、そのままスクリプトに組み込めます。</p>
+
+<h3>6-1. 開発サーバーの起動を待つ</h3>
+<pre><code>herdr pane run w1:p3 "npm run dev"                               <span class="cm"># 入力して Enter</span>
+herdr pane wait-output w1:p3 --match "ready" --timeout 60000    <span class="cm"># 出力に一致するまで待つ</span>
+herdr pane read w1:p3 --source recent --lines 30                 <span class="cm"># ログを読む</span></code></pre>
+
+<h3>6-2. レビュー役を起動して、実装役と連携させる</h3>
+<pre><code><span class="cm"># w2 に空のシェルのペインがある前提。新しく作るなら pane split</span>
+herdr pane split w2:p1 --direction right --cwd ~/work/api-feature-x
+herdr agent start reviewer --kind claude --pane w2:p1
+
+<span class="cm"># 実装役に頼み、終わるまで待つ</span>
+herdr agent prompt impl "/users に検索 API を追加して、テストも書いて" --wait --timeout 900000
+
+<span class="cm"># レビュー役に渡し、終わるまで待つ</span>
+herdr agent prompt reviewer "main との差分をレビューして、問題を箇条書きで" --wait
+herdr agent read reviewer --lines 80
+
+<span class="cm"># 指摘を実装役に戻す。承認待ちになったら止める</span>
+herdr agent prompt impl "レビューの指摘を直して"
+herdr agent wait impl --until blocked --timeout 600000</code></pre>
+
+<figure>
+<svg viewBox="0 0 760 330" role="img" aria-label="スクリプト、impl、reviewer の 3 者のやり取りのシーケンス図">
+  <defs>
+    <marker id="ah6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="d-arrowhead" d="M0,0 L10,5 L0,10 z"/></marker>
+    <marker id="ah6a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="d-arrowhead-accent" d="M0,0 L10,5 L0,10 z"/></marker>
+  </defs>
+  <rect class="d-box" x="40" y="10" width="160" height="34" rx="6"/><text class="d-text" x="60" y="32">あなた / スクリプト</text>
+  <rect class="d-box" x="300" y="10" width="160" height="34" rx="6"/><text class="d-text" x="326" y="32">impl（w1:p1）</text>
+  <rect class="d-box" x="560" y="10" width="160" height="34" rx="6"/><text class="d-text" x="574" y="32">reviewer（w2:p1）</text>
+  <line class="d-dash" x1="120" y1="44" x2="120" y2="320"/>
+  <line class="d-dash" x1="380" y1="44" x2="380" y2="320"/>
+  <line class="d-dash" x1="640" y1="44" x2="640" y2="320"/>
+
+  <rect class="bar-work" x="374" y="78" width="12" height="52"/>
+  <rect class="bar-work" x="634" y="160" width="12" height="44"/>
+  <rect class="bar-work" x="374" y="246" width="12" height="40"/>
+
+  <path class="d-line" d="M120 74 L 372 74" marker-end="url(#ah6)"/>
+  <text class="d-mono" x="130" y="68">agent prompt impl … --wait</text>
+  <path class="d-accent" d="M372 134 L 122 134" marker-end="url(#ah6a)"/>
+  <text class="d-sub" x="140" y="128">idle に戻ったら返る（ポーリング不要）</text>
+
+  <path class="d-line" d="M120 156 L 632 156" marker-end="url(#ah6)"/>
+  <text class="d-mono" x="130" y="150">agent prompt reviewer … --wait</text>
+  <path class="d-accent" d="M632 208 L 122 208" marker-end="url(#ah6a)"/>
+  <text class="d-sub" x="140" y="202">終わったら返る → agent read reviewer</text>
+
+  <path class="d-line" d="M120 242 L 372 242" marker-end="url(#ah6)"/>
+  <text class="d-mono" x="130" y="236">agent prompt impl "指摘を直して"</text>
+  <path class="d-accent" d="M372 290 L 122 290" marker-end="url(#ah6a)"/>
+  <text class="d-mono" x="130" y="284">agent wait impl --until blocked</text>
+  <text class="d-sub" x="130" y="312">承認待ちになったら人が見る</text>
+</svg>
+<figcaption>図 5: CLI での連携。待つ処理はサーバー側がイベントで判定する。</figcaption>
+</figure>
+
+<div class="warn"><strong>注意</strong>状態は画面から判定していることがあります。判定ルールが合わないと、blocked のはずが idle に見えることがあり、そのまま自動で入力すると承認ダイアログにキーを打ち込んでしまいます。自動化するエージェントには integration を入れ、怪しいときは STEP 12 の <code>agent explain</code> で確かめてください。</div>
+
+<!-- ============ S7 ============ -->
+<h2 id="s7"><span class="step-tag">STEP 7</span><br>エージェントに自分で操作させる</h2>
+<p>STEP 6 の操作を、エージェント自身にさせることもできます。herdr の操作方法を教えるスキルを入れます。</p>
+<pre><code>npx skills add herdrdev/herdr --skill herdr -g</code></pre>
+<p>入れたあと、impl にこう頼みます。</p>
+<pre><code>&gt; 右にペインを分けてレビュー用の claude を起動し、いまの変更をレビューさせて。
+  終わったら指摘を読んで直して。</code></pre>
+<p>impl は <code>herdr pane split</code>、<code>agent start</code>、<code>agent prompt --wait</code> を自分で実行し、サイドバーにレビュー役が増えます。</p>
+
+<!-- ============ S8 ============ -->
+<h2 id="s8"><span class="step-tag">STEP 8</span><br>Socket API で状態を受け取る</h2>
+<p>自作のツール（通知や集計のダッシュボードなど）からつなぐときは、ソケットを直接使います。1 行に 1 つの JSON を送ります（NDJSON）。</p>
+<pre><code><span class="cm"># ソケットの場所: ~/.config/herdr/herdr.sock（名前付きセッションは sessions/&lt;name&gt;/herdr.sock）</span>
+echo '{"id":"1","method":"pane.read","params":{"pane_id":"w1:p3"}}' \
+  | nc -U ~/.config/herdr/herdr.sock
+
+<span class="cm"># 返ってくる形</span>
+<span class="cm"># {"id":"1","result":{...}}  /  {"id":"1","error":{"code":"not_found","message":"..."}}</span>
+
+herdr api schema --json      <span class="cm"># メソッドとイベントの完全なスキーマ</span></code></pre>
+<ul>
+  <li><code>events.subscribe</code> を送ると接続がつながったままになり、エージェントの状態の変化やペインの出力の一致などのイベントが流れてきます。購読のフィルタの書き方はスキーマで確かめてください。</li>
+  <li>過去のイベントは再送されません。<code>events_lost</code> が来たら、購読し直して <code>session.snapshot</code> を取り直します。イベントは「状態を読み直す合図」として扱います。</li>
+  <li>たいていの用途は STEP 6 の CLI で足ります。</li>
+</ul>
+
+<!-- ============ S9 ============ -->
+<h2 id="s9"><span class="step-tag">STEP 9</span><br>離席と再接続</h2>
+<p>エージェントが作業している間に、席を外します。</p>
+<pre><code>prefix q          <span class="cm"># detach。ターミナルのウィンドウを閉じても同じ</span>
+<span class="cm"># …ノートPCのスリープ、SSH の切断があっても動き続ける…</span>
+herdr             <span class="cm"># 再 attach。レイアウトも画面もそのまま</span></code></pre>
+<figure>
+<svg viewBox="0 0 760 170" role="img" aria-label="クライアントが切れてもサーバーとペインのプロセスが動き続ける様子">
+  <text class="d-text" x="10" y="44">クライアント</text>
+  <text class="d-text" x="10" y="84">herdr サーバー</text>
+  <text class="d-text" x="10" y="124">エージェント</text>
+  <rect class="bar-done" x="140" y="32" width="190" height="18" rx="3"/>
+  <rect class="bar-mute" x="330" y="38" width="210" height="6" rx="3"/>
+  <rect class="bar-done" x="540" y="32" width="210" height="18" rx="3"/>
+  <rect class="bar-work" x="140" y="72" width="610" height="18" rx="3"/>
+  <rect class="bar-work" x="140" y="112" width="610" height="18" rx="3"/>
+  <line class="d-dash" x1="330" y1="20" x2="330" y2="140"/>
+  <line class="d-dash" x1="540" y1="20" x2="540" y2="140"/>
+  <text class="d-sub" x="296" y="160">prefix q / 切断</text>
+  <text class="d-sub" x="508" y="160">herdr で再 attach</text>
+  <text class="d-sub" x="350" y="30">接続なし。作業は続く</text>
+</svg>
+<figcaption>図 6: detach で切れるのはクライアントだけ。プロセス、画面、会話はすべて残る。</figcaption>
+</figure>
+<p>herdr の画面全体ではなく、エージェント 1 つにだけつなぐこともできます。</p>
+<pre><code>herdr agent attach reviewer              <span class="cm"># そのエージェントのターミナルだけを表示</span>
+herdr agent attach reviewer --takeover   <span class="cm"># 別のクライアントが入力を握っているときに奪う</span></code></pre>
+
+<!-- ============ S10 ============ -->
+<h2 id="s10"><span class="step-tag">STEP 10</span><br>リモートの開発機で動かす</h2>
+<p>長い作業は、常時動いている開発機に任せます。SSH の設定に <code>workbox</code> という別名がある前提です。</p>
+<pre><code><span class="cm"># 1 回だけ: SSH の先で herdr を起動する（開発機にもインストールが必要）</span>
+herdr --remote workbox                       <span class="cm"># 手元は薄いクライアント。キー設定は手元のものを使う</span>
+
+<span class="cm"># 開発機を登録すると、手元と並べて 1 画面で見られる</span>
+herdr machine add workbox --label "Build machine"
+herdr machine list
+herdr machine status
+
+<span class="cm"># CLI を開発機へ転送する</span>
+herdr --machine "Build machine" agent list
+herdr --machine "Build machine" worktree create --cwd /srv/api --branch review
+herdr machine reconnect "Build machine"      <span class="cm"># 切れたら SSH の認証からやり直す</span></code></pre>
+<figure>
+<svg viewBox="0 0 760 190" role="img" aria-label="手元の薄いクライアントから SSH で開発機の herdr サーバーにつなぐ図">
+  <defs>
+    <marker id="ah10" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="d-arrowhead-accent" d="M0,0 L10,5 L0,10 z"/></marker>
+  </defs>
+  <rect class="d-box" x="10" y="20" width="230" height="150" rx="10"/>
+  <text class="d-text" x="26" y="46" font-weight="600">ノート PC</text>
+  <text class="d-sub" x="26" y="68">herdr（薄いクライアント）</text>
+  <text class="d-sub" x="26" y="88">手元のキー設定を使う</text>
+  <rect class="t-side" x="26" y="102" width="198" height="56" rx="4"/>
+  <text class="t-mute" x="36" y="122">local · api</text>
+  <text class="t-mute" x="36" y="144">Build machine · api</text>
+  <circle class="s-work" cx="206" cy="140" r="4.5"/>
+
+  <path class="d-accent" d="M240 95 L 470 95" marker-end="url(#ah10)"/>
+  <text class="d-sub" x="300" y="86">SSH（--remote / machine）</text>
+  <text class="d-sub" x="290" y="116">切れても開発機側は止まらない</text>
+
+  <rect class="d-box-accent" x="472" y="20" width="278" height="150" rx="10"/>
+  <text class="d-text" x="488" y="46" font-weight="600">workbox（Build machine）</text>
+  <text class="d-sub" x="488" y="68">herdr サーバー。常時動いている</text>
+  <rect class="d-box" x="488" y="84" width="118" height="70" rx="6"/>
+  <circle class="s-work" cx="502" cy="104" r="4.5"/><text class="d-mono" x="512" y="108">impl</text>
+  <rect class="d-box" x="616" y="84" width="118" height="70" rx="6"/>
+  <circle class="s-idle" cx="630" cy="104" r="4.5"/><text class="d-mono" x="640" y="108">reviewer</text>
+</svg>
+<figcaption>図 7: リモート構成。複数のマシンのエージェントが、サイドバーの 1 つの一覧にまとまる。</figcaption>
+</figure>
+<p class="cm"><code>--machine</code> は <code>--session</code> や <code>--remote</code> と同時には使えません。インストール、セッションの管理、対話的な attach は転送されません。</p>
+
+<!-- ============ S11 ============ -->
+<h2 id="s11"><span class="step-tag">STEP 11</span><br>再起動と更新</h2>
+<p>サーバーを止めて、もう一度起動します。</p>
+<pre><code>herdr server stop
+herdr             <span class="cm"># レイアウトが戻る。integration を入れたエージェントは会話を再開する</span></code></pre>
+<div class="table-wrap"><table>
+<tr><th>場面</th><th>プロセス</th><th>レイアウトと cwd</th><th>直近の画面</th><th>エージェントの会話</th></tr>
+<tr><td>detach → 再 attach（STEP 9）</td><td>残る</td><td>残る</td><td>残る</td><td>残る</td></tr>
+<tr><td>サーバーの再起動</td><td>消える（新しいシェルになる）</td><td>残る</td><td><code>pane_history</code> を有効にしたときだけ</td><td>native resume（デフォルトで有効）</td></tr>
+<tr><td><code>herdr update --handoff</code></td><td>引き継ぎに成功すれば残る</td><td>残る</td><td>成功すれば残る</td><td>成功すれば残る</td></tr>
+</table></div>
+<pre><code><span class="cm"># ~/.config/herdr/config.toml</span>
+[experimental]
+pane_history = true              <span class="cm"># 再起動後に画面の履歴を再生する。秘密情報が残りうるのでデフォルトは無効</span>
+
+[session]
+resume_agents_on_restore = true  <span class="cm"># 会話の再開（デフォルトで有効）</span></code></pre>
+<p>herdr を更新するときは、動いているペインを引き継ぐ handoff（実験的）が使えます。</p>
+<pre><code>herdr update --handoff    <span class="cm"># 公式のインストールスクリプトで入れた場合だけ。brew / mise / nix では使えない</span></code></pre>
+<div class="warn"><strong>注意</strong>サーバーを再起動すると、開発サーバーやテストのプロセスは止まります。STEP 6-1 の <code>pane run</code> でもう一度起動してください。</div>
+
+<!-- ============ S12 ============ -->
+<h2 id="s12"><span class="step-tag">STEP 12</span><br>調子が悪いとき</h2>
+<div class="table-wrap"><table>
+<tr><th>症状</th><th>やること</th></tr>
+<tr><td>エージェントが一覧に出ない・状態がおかしい</td><td><code>herdr agent explain impl --json</code> で判定の理由を見る。<code>herdr integration status</code> も見る</td></tr>
+<tr><td>サンドボックスや VM の中で動かしていて検出されない</td><td>環境変数 <code>HERDR_AGENT</code> でエージェントの種類を指定する</td></tr>
+<tr><td>判定ルールを自分で直したい</td><td><code>~/.config/herdr/agent-detection/&lt;agent&gt;.toml</code> に書くと、配布されたルールより優先される。<code>herdr server reload-agent-manifests</code> で反映</td></tr>
+<tr><td>キーを押しても反応しない</td><td>OS やターミナルがそのキーを先に取っている。<code>[keys]</code> で割り当てを変える</td></tr>
+<tr><td>起動できない・ソケットのエラー</td><td><code>herdr status server</code> / <code>herdr status client</code>。ログは <code>~/.config/herdr/</code></td></tr>
+</table></div>
+
+<!-- ============ S13 ============ -->
+<h2 id="s13"><span class="step-tag">STEP 13</span><br>広げる・片付ける</h2>
+<h3>設定とプラグイン</h3>
+<pre><code>herdr --default-config > ~/.config/herdr/config.toml   <span class="cm"># デフォルト値を書き出して編集する</span>
+herdr server reload-config                             <span class="cm"># ペインを止めずに反映</span></code></pre>
+<p>キー、テーマ、サイドバー、通知、スクロールバックを変えられます。tmux の中で herdr を使うなら、prefix がどちらも <code>ctrl+b</code> なので、どちらかを変えてください。プラグイン（ファイルビューア、レビュー用のサイドバー、Telegram への通知など）は <a href="https://herdr.dev/plugins">herdr.dev/plugins</a> にあります。</p>
+
+<h3>片付ける</h3>
+<pre><code>herdr worktree list
+herdr worktree remove …          <span class="cm"># 引数は herdr worktree remove --help で確認</span>
+herdr workspace close w2
+herdr session stop demo          <span class="cm"># STEP 1 で作った名前付きセッション</span>
+herdr server stop                <span class="cm"># デフォルトのセッションを止める</span></code></pre>
+
+<h2>通ったことの一覧</h2>
+<div class="table-wrap"><table>
+<tr><th>できること</th><th>STEP</th></tr>
+<tr><td>いまのターミナルの中で使う。セッションと名前付きセッション</td><td>1</td></tr>
+<tr><td>Workspace・Tab・Pane の分割、マウスと prefix キー</td><td>2</td></tr>
+<tr><td>エージェントの自動検出、integration</td><td>3</td></tr>
+<tr><td>サイドバーの状態表示、上の階層への伝搬、名前付け</td><td>4</td></tr>
+<tr><td>Git worktree を Workspace として開く</td><td>5</td></tr>
+<tr><td>CLI での操作（pane run / read / wait-output、agent start / prompt / wait / read）</td><td>6</td></tr>
+<tr><td>エージェント用のスキル（エージェントが herdr を操作する）</td><td>7</td></tr>
+<tr><td>Socket API とイベント購読</td><td>8</td></tr>
+<tr><td>detach / attach、エージェント 1 つへの attach</td><td>9</td></tr>
+<tr><td>リモート、複数のマシンを 1 画面に、CLI の転送</td><td>10</td></tr>
+<tr><td>再起動後の復元、会話の再開、handoff での更新</td><td>11</td></tr>
+<tr><td>判定の理由の確認、検出ルールの上書き</td><td>12</td></tr>
+<tr><td>設定の反映、プラグイン</td><td>13</td></tr>
+</table></div>
+
+<p class="cm">出典: <a href="https://herdr.dev/tui/docs/">herdr docs</a> · <a href="https://herdr.dev/tui/docs/cli-reference/">CLI reference</a> · <a href="https://herdr.dev/tui/docs/socket-api/">Socket API</a> · <a href="https://herdr.dev/tui/docs/session-state/">Session state</a> · <a href="https://herdr.dev/tui/docs/agents/">Agents</a> · <a href="https://herdr.dev/agent-guide.md">Agent guide</a>。pre-1.0 なので、コマンドやオプションは変わることがあります。</p>
+
+</main>
+</body>
+</html>
